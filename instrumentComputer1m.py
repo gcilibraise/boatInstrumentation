@@ -9,10 +9,8 @@
 #stbOilPress -  daqc a01
 #portCoolTemp - dagc a02
 #stbCoolTemp -  daqc a03
-#portAMPHi -    daqc a04
-#portAMPLo -    daqc a05
-#stbAMPHi -     daqc a06
-#stbAMPLo -     daqc a07
+#portVolts -    daqc a04
+#stbVolts -     daqc a06
 #stbEngOn -     daqc d02
 #portEngOn -    daqc d03
 #gen1On -       daqc d04
@@ -31,6 +29,18 @@
 import json
 import signal
 
+#setup server
+from flask import Flask
+app=Flask(__name__)
+
+@app.route('/')
+def first_action():
+    return "hello world"
+
+@app.route('/test')
+def second_action():
+    return "other output"
+
 import time
 import sys
 import RPi.GPIO as GPIO
@@ -48,10 +58,8 @@ portOilPress_channel = 0
 stbOilPress_channel = 1
 portCoolTemp_channel= 2
 stbCoolTemp_channel=3
-portAMPHi_channel=4
-portAMPLo_channel=5
-stbAMPHi_channel=6
-stbAMPLo_channel=7
+portVolts_channel=4
+stbVolts_channel=6
 #digital daqc board #0
 stbEngOn_channel=2
 portEngOn_channel=3
@@ -81,8 +89,8 @@ TurnOffSystem = 5
 #stbOilPress: int
 #portCoolTemp: int
 #stbCoolTemp: int
-#portAmp: int
-#stbAmp: int
+#portVolts: int
+#stbVolts: int
 #stbEngOn: int
 #portEngOn: int
 #gen1On: int
@@ -113,6 +121,9 @@ SeqID=0
 clock_count=0
 portRPMcounter =0
 stbRPMcounter=0
+stbHourCounter=0
+portHourCounter=0
+
 
 data1={}
 
@@ -135,6 +146,9 @@ def ADCoutPress(V):
     output=int(V + .3*(V-52))
     return output
 
+def ADCoutVolt(V):
+    output=int(10*(V/256)+.5)
+    return output
 
 
 def portRPM_callback(portRPM_channel):
@@ -163,10 +177,51 @@ def the_callback(in_channel):
         dvalue1=DAQC.getDINall(1)
 
         #convert and scale analog data
-        data1("portOilPress")=ADCout(avalues0[0])
-        data1("stbOilPress")=ADCout(avalues0[1])
-        data1("portCoolTemp")=ADCout(avalues0[2])
-        data1("stbCoolTemp")=ADCout(avalues0[3])
+        data1["portOilPress"]=ADCoutPress(avalues0[0])
+        data1["stbOilPress"]=ADCoutPress(avalues0[1])
+        data1["portCoolTemp"]=ADCoutTemp(avalues0[2])
+        data1["stbCoolTemp"]=ADCoutTemp(avalues0[3])
+        data1["portAmp"]=ADCoutVolt(avalues0[4])
+        data1["stbAmp"]=ADCoutVolt(avalues0[6])
+
+        data1["gen2OilPress"]=ADCoutPress(avalues1[0])
+        data1["gen1OilPress"]=ADCoutPress(avalues1[1])
+        data1["gen1CoolTemp"]=ADCoutTemp(avalues1[2])
+        data1["gen2CoolTemp"]=ADCoutTemp(avalues1[3])
+
+        #convert digital data
+        data1["stbEngOn"]=bit_set(dvalue0[2])
+        data1["portEngOn"]=bit_set(dvalue0[3])
+        data1["gen1EngOn"]=bit_set(dvalue0[4])
+        data1["gen2EngOn"]=bit_set(dvalue0[5])
+        data1["stabOilLo"]=bit_set(dvalue1[0])
+        data1["acPowerOn"]=bit_set(dvalue1[1])
+        data1["refrigOn"]=bit_set(dvalue1[2])
+        data1["rearBildgeOn"]=bit_set(dvalue1[3])
+        data1["frontBildgeOn"]=bit_set(dvalue1[4])
+        data1["TurnOffSystem"]=bit_set(dvalue1[5])
+
+        #setup RPM output
+        data1["portRPM"]=portRPMcounter*15
+        data1["stbRPMcounter"]=stbRPMcounter
+
+        #setput Engine  meters
+        if data1['stbEngOn'] == True: stbHourCounter += 1
+        if data1['portEngOn'] == True: stbHourCounter +=1
+        
+
+        if stbHourCounter == 360:
+            data1['stbEngHour']+= 1
+            stbHourCounter = 0
+        if portHourCounter == 360:
+            data1['portEngHour']+=1
+            stbHourCounter = 0
+
+        data1['SeqID']+=1
+
+
+
+        #write the data1 object to a file- jsonize first
         
         print("rpm counter" , portRPMcounter,stbRPMcounter)
         portRPMcounter=0
@@ -178,6 +233,7 @@ def signal_handler(sig,frame):
     sys.exit()
 
 if __name__== '__main__':
+
     #pin 08 or gpio14 is the source pin for the pwm output
     #pin 10 or gpio15 is the input pin for the interrupt dectect
     #pin 12 of gpio18 is the input for the rpm pulse train
@@ -212,6 +268,8 @@ if __name__== '__main__':
 
     #start PWM
     p.start(50)
+    #start server
+    app.run(debug=False,port = 80, host='0.0.0.0')
     while (True):
         
         signal.pause()
