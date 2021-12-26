@@ -108,7 +108,7 @@ TurnOffSystem = 5
 
 #data path for instData file
 dataPath = "/home/pi/"
-
+path='/home/gcilibraise/Documents/Notebooks/boatInstrumentation/'
 
 
 
@@ -222,7 +222,9 @@ def the_callback(in_channel):
 
 
         #write the data1 object to a file- jsonize first
-        
+        with open(path+'instData.txt','w') as outfile1:
+            json.dump(instData,outfile1)
+
         print("rpm counter" , portRPMcounter,stbRPMcounter)
         portRPMcounter=0
         stbRPMcounter=0
@@ -259,11 +261,11 @@ if __name__== '__main__':
 
 #read data file
     path='/home/pi/Projects/pythontests/'
-
-    #with open(path+'kfactors.txt') as json_file0:
-    #   kfactor=json.load(json_file0)
-    with open(path +'instData.txt') as json_file1:
-        data1=json.load(json_file1)
+    with open(path+'instData.txt') as json_file:
+        data1=json.load(json_file)
+    
+    
+    
 
 
     #start PWM
