@@ -1,1 +1,1 @@
-{"data": [{"fileName": "gageData", "SeqID": 0, "portFuelSum": 0, "stbFuelSum": 1, "portFuelLevel": 2, "stbFuelLevel": 3, "forwWaterLevel": 4, "rearWaterLevel": 5, "forHoldLevel": 6, "rearHoldLevel": 7, "portFuelRate": 8, "stbFuelRate": 9, "stbEngOn": 1, "portEngOn": 0, "TurnOffSystem": 0}]}
+{"fileName": "gageData", "SeqID": 0, "portFuelSum": 0, "stbFuelSum": 1, "portFuelLevel": 2, "stbFuelLevel": 3, "forwWaterLevel": 4, "rearWaterLevel": 5, "forHoldLevel": 6, "rearHoldLevel": 7, "portFuelRate": 8, "stbFuelRate": 9, "stbEngOn": 1, "portEngOn": 0, "TurnOffSystem": 0}
